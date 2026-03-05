@@ -82,7 +82,7 @@
   --foreground: 0 0% 13%;
 
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 13%;
+  --card-foreground: 206 5.5% 24.9%;
 
   --popover: 0 0% 100%;
   --popover-foreground: 0 0% 13%;
@@ -111,9 +111,9 @@
   /* Keep-specific colors */
   --keep-header: 0 0% 100%;
   --keep-header-foreground: 0 0% 38%;
-  --keep-search: 220 14% 96%;
+  --keep-search: 213.333, 43%, 96%;
   --keep-sidebar: 0 0% 100%;
-  --keep-sidebar-hover: 43 100% 94%;
+  --keep-sidebar-hover: 213.333, 43%, 96%;
   --keep-sidebar-active: 43 100% 88%;
   --keep-icon: 0 0% 38%;
   --keep-toolbar: 0 0% 38%;
@@ -173,7 +173,12 @@
     font-family: 'Roboto', 'Google Sans', sans-serif;
   }
 }
-
+@utility keep-header-shadow {
+  box-shadow: 
+    0 4px 5px 0 rgba(0, 0, 0, .14),
+    0 1px 10px 0 rgba(0, 0, 0, .12),
+    0 2px 4px -1px rgba(0, 0, 0, .2);
+}
 @utility keep-shadow {
   box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 2px 6px 2px rgba(60, 64, 67, 0.15);
 }

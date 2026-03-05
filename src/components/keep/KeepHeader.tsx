@@ -6,7 +6,7 @@ interface KeepHeaderProps {
 
 const KeepHeader = ({ onToggleSidebar }: KeepHeaderProps) => {
   return (
-    <header className="sticky top-0 z-30 flex items-center h-16 px-4 border-b border-border bg-keep-header">
+    <header className="sticky top-0 z-30 flex items-center justify-between h-16 p-2 border-b border-border bg-keep-header keep-header-shadow">
       {/* Left: Logo + Toggle */}
       <div className="flex items-center gap-1">
         <button
@@ -14,13 +14,13 @@ const KeepHeader = ({ onToggleSidebar }: KeepHeaderProps) => {
           className="p-3 rounded-full hover:bg-secondary transition-colors"
           aria-label="Toggle sidebar"
         >
-          <Menu className="w-5 h-5 text-keep-icon" />
+          <Menu className="w-6 h-6 text-keep-icon" />
         </button>
-        <div className="flex items-center gap-2 ml-1">
+        <div className="flex items-center gap-2">
           <img
             src="https://www.gstatic.com/images/branding/product/1x/keep_2020q4_48dp.png"
             alt="Keep"
-            className="w-8 h-8"
+            className="w-10 h-10"
           />
           <span className="text-[22px] font-display text-keep-header-foreground hidden sm:block">
             Keep

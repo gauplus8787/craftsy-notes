@@ -17,6 +17,7 @@ export interface Note {
   content: string;
   color: string;
   pinned: boolean;
+  archived: boolean;
 }
 
 interface NoteCardProps {
@@ -178,14 +179,14 @@ const NoteCard = ({ note, onPin, onDelete, onColorChange }: NoteCardProps) => {
                   onDelete(note.id);
                   setShowMore(false);
                 }}
-                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-card-foreground hover:bg-secondary transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
                 Xoá ghi chú
               </button>
               <button
                 onClick={() => setShowMore(false)}
-                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-card-foreground hover:bg-secondary transition-colors"
               >
                 <Tag className="w-4 h-4" />
                 Thêm nhãn

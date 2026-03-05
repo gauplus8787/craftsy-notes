@@ -47,7 +47,7 @@ const KeepSidebar = ({ expanded, activeItem, onItemClick }: KeepSidebarProps) =>
               {expanded && (
                 <span
                   className={`ml-3 text-sm font-medium whitespace-nowrap ${
-                    isActive ? "text-foreground font-semibold" : "text-keep-icon"
+                    isActive ? "text-foreground" : "text-keep-icon"
                   }`}
                 >
                   {item.label}
