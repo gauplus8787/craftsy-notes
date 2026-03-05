@@ -18,6 +18,7 @@ export interface Note {
   color: string;
   pinned: boolean;
   archived: boolean;
+  deleted?: boolean;
 }
 
 interface NoteCardProps {
@@ -25,6 +26,7 @@ interface NoteCardProps {
   onPin: (id: string) => void;
   onDelete: (id: string) => void;
   onColorChange: (id: string, color: string) => void;
+  onArchive?: (id: string) => void;
 }
 
 const noteColors: { name: string; value: string; class: string }[] = [
@@ -47,7 +49,7 @@ const getColorClass = (color: string) => {
   return found ? found.class : "bg-note";
 };
 
-const NoteCard = ({ note, onPin, onDelete, onColorChange }: NoteCardProps) => {
+const NoteCard = ({ note, onPin, onDelete, onColorChange, onArchive }: NoteCardProps) => {
   const [showMore, setShowMore] = useState(false);
   const [showColors, setShowColors] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -154,6 +156,7 @@ const NoteCard = ({ note, onPin, onDelete, onColorChange }: NoteCardProps) => {
           <ImageIcon className="w-4 h-4 text-keep-toolbar" />
         </button>
         <button
+          onClick={() => onArchive?.(note.id)}
           className="p-2 rounded-full hover:bg-secondary/50 transition-colors"
           title="Lưu trữ"
         >
