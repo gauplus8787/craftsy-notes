@@ -37,7 +37,7 @@ const Index = () => {
           Khác
         </p>
       )}
-      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
+      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-6 gap-4">
         {otherNotes.map((note) => (
           <NoteCard
             key={note.id}
