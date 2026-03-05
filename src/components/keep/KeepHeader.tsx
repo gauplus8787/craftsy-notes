@@ -1,16 +1,14 @@
 import { Menu, Search, RefreshCw, LayoutGrid, Settings, User } from "lucide-react";
+import { useSidebarContext } from "@/contexts/SidebarContext";
 
-interface KeepHeaderProps {
-  onToggleSidebar: () => void;
-}
+const KeepHeader = () => {
+  const { toggle } = useSidebarContext();
 
-const KeepHeader = ({ onToggleSidebar }: KeepHeaderProps) => {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between h-16 p-2 border-b border-border bg-keep-header keep-header-shadow">
-      {/* Left: Logo + Toggle */}
       <div className="flex items-center gap-1">
         <button
-          onClick={onToggleSidebar}
+          onClick={toggle}
           className="p-3 rounded-full hover:bg-secondary transition-colors"
           aria-label="Toggle sidebar"
         >
@@ -28,7 +26,6 @@ const KeepHeader = ({ onToggleSidebar }: KeepHeaderProps) => {
         </div>
       </div>
 
-      {/* Center: Search */}
       <div className="flex-1 max-w-[720px] mx-8">
         <div className="flex items-center bg-keep-search rounded-lg px-4 py-2.5 gap-3 hover:keep-shadow transition-shadow">
           <Search className="w-5 h-5 text-keep-icon flex-shrink-0" />
@@ -40,7 +37,6 @@ const KeepHeader = ({ onToggleSidebar }: KeepHeaderProps) => {
         </div>
       </div>
 
-      {/* Right: Actions */}
       <div className="flex items-center gap-1">
         <button className="p-3 rounded-full hover:bg-secondary transition-colors hidden sm:flex">
           <RefreshCw className="w-5 h-5 text-keep-icon" />

@@ -1,9 +1,6 @@
 import { Lightbulb, Bell, Pencil, Archive, Trash2 } from "lucide-react";
 import { NavLink } from "react-router-dom";
-
-interface KeepSidebarProps {
-  expanded: boolean;
-}
+import { useSidebarContext } from "@/contexts/SidebarContext";
 
 const navItems = [
   { id: "notes", label: "Ghi chú", icon: Lightbulb, path: "/" },
@@ -13,7 +10,9 @@ const navItems = [
   { id: "trash", label: "Thùng rác", icon: Trash2, path: "/trash" },
 ];
 
-const KeepSidebar = ({ expanded }: KeepSidebarProps) => {
+const KeepSidebar = () => {
+  const { expanded } = useSidebarContext();
+
   return (
     <aside
       className={`sticky top-16 h-[calc(100vh-4rem)] bg-keep-sidebar transition-all duration-200 ease-in-out flex-shrink-0 z-20 ${
