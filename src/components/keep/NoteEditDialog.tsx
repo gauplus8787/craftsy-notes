@@ -68,7 +68,7 @@ const NoteEditDialog = ({
   const [historyIndex, setHistoryIndex] = useState(0);
   const historyTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
   const colorRef = useRef<HTMLDivElement>(null);
@@ -112,13 +112,14 @@ const NoteEditDialog = ({
   }, [note, open]);
 
 
-  // Auto-resize textarea
+  // Set initial HTML content
   useEffect(() => {
-    if (textareaRef.current && open && !isChecklist) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    if (contentRef.current && open && !isChecklist) {
+      if (contentRef.current.innerHTML !== content) {
+        contentRef.current.innerHTML = content;
+      }
     }
-  }, [content, open, isChecklist]);
+  }, [open, isChecklist]);
 
   const pushHistory = useCallback((t: string, c: string) => {
     if (historyTimeout.current) clearTimeout(historyTimeout.current);
@@ -161,7 +162,7 @@ const NoteEditDialog = ({
   }, []);
 
   const handleSaveAndClose = () => {
-    let finalContent = content;
+    let finalContent = contentRef.current?.innerHTML || content;
     if (isChecklist) {
       finalContent = checklistItems
         .filter(item => item.text.trim())
@@ -186,13 +187,10 @@ const NoteEditDialog = ({
     pushHistory(title, val);
   };
 
-  const handleTextarea = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    handleContentChange(e.target.value);
-    const ta = textareaRef.current;
-    if (ta) {
-      ta.style.height = "auto";
-      ta.style.height = ta.scrollHeight + "px";
-    }
+  const handleContentInput = () => {
+    const html = contentRef.current?.innerHTML || "";
+    setContent(html);
+    pushHistory(title, html);
   };
 
   const toggleChecklist = () => {
@@ -237,18 +235,9 @@ const NoteEditDialog = ({
     if (checklistItems.length > 1) setChecklistItems(checklistItems.filter((_, i) => i !== index));
   };
 
-  const insertFormat = (prefix: string, suffix: string) => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const selected = content.substring(start, end);
-    const newContent = content.substring(0, start) + prefix + selected + suffix + content.substring(end);
-    handleContentChange(newContent);
-    setTimeout(() => {
-      ta.focus();
-      ta.setSelectionRange(start + prefix.length, end + prefix.length);
-    }, 0);
+  const applyFormat = (command: string, value?: string) => {
+    contentRef.current?.focus();
+    document.execCommand(command, false, value);
   };
 
   if (!open) return null;
@@ -383,12 +372,12 @@ const NoteEditDialog = ({
               )}
             </div>
           ) : (
-            <textarea
-              ref={textareaRef}
-              placeholder="Ghi chú..."
-              value={content}
-              onChange={handleTextarea}
-              className="w-full px-4 mb-1 bg-transparent outline-none text-foreground text-sm placeholder:text-muted-foreground resize-none overflow-hidden min-h-[60px]"
+            <div
+              ref={contentRef}
+              contentEditable
+              onInput={handleContentInput}
+              data-placeholder="Ghi chú..."
+              className="w-full px-4 mb-1 bg-transparent outline-none text-foreground text-sm empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground min-h-[60px] whitespace-pre-wrap break-words"
             />
           )}
         </div>
@@ -396,13 +385,13 @@ const NoteEditDialog = ({
         {/* Formatting toolbar */}
         {showFormatting && !isChecklist && (
           <div className="flex items-center gap-0.5 px-2 py-1 border-t border-border/30">
-            <button onClick={() => insertFormat("**", "**")} className="p-2 rounded-full hover:bg-secondary/50" title="Đậm"><Bold className="w-4 h-4 text-keep-toolbar" /></button>
-            <button onClick={() => insertFormat("_", "_")} className="p-2 rounded-full hover:bg-secondary/50" title="Nghiêng"><Italic className="w-4 h-4 text-keep-toolbar" /></button>
-            <button onClick={() => insertFormat("<u>", "</u>")} className="p-2 rounded-full hover:bg-secondary/50" title="Gạch chân"><Underline className="w-4 h-4 text-keep-toolbar" /></button>
-            <button onClick={() => insertFormat("~~", "~~")} className="p-2 rounded-full hover:bg-secondary/50" title="Gạch ngang"><Strikethrough className="w-4 h-4 text-keep-toolbar" /></button>
+            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("bold"); }} className="p-2 rounded-full hover:bg-secondary/50" title="Đậm"><Bold className="w-4 h-4 text-keep-toolbar" /></button>
+            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("italic"); }} className="p-2 rounded-full hover:bg-secondary/50" title="Nghiêng"><Italic className="w-4 h-4 text-keep-toolbar" /></button>
+            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("underline"); }} className="p-2 rounded-full hover:bg-secondary/50" title="Gạch chân"><Underline className="w-4 h-4 text-keep-toolbar" /></button>
+            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("strikeThrough"); }} className="p-2 rounded-full hover:bg-secondary/50" title="Gạch ngang"><Strikethrough className="w-4 h-4 text-keep-toolbar" /></button>
             <div className="w-px h-5 bg-border/50 mx-1" />
-            <button onClick={() => insertFormat("- ", "")} className="p-2 rounded-full hover:bg-secondary/50" title="Danh sách"><List className="w-4 h-4 text-keep-toolbar" /></button>
-            <button onClick={() => insertFormat("1. ", "")} className="p-2 rounded-full hover:bg-secondary/50" title="Danh sách số"><ListOrdered className="w-4 h-4 text-keep-toolbar" /></button>
+            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("insertUnorderedList"); }} className="p-2 rounded-full hover:bg-secondary/50" title="Danh sách"><List className="w-4 h-4 text-keep-toolbar" /></button>
+            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("insertOrderedList"); }} className="p-2 rounded-full hover:bg-secondary/50" title="Danh sách số"><ListOrdered className="w-4 h-4 text-keep-toolbar" /></button>
           </div>
         )}
 

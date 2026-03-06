@@ -52,7 +52,7 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
   const [historyIndex, setHistoryIndex] = useState(0);
   const historyTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
   const colorRef = useRef<HTMLDivElement>(null);
@@ -111,14 +111,18 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const handleClose = () => {
-    let finalContent = content;
+  const getContent = () => {
     if (isChecklist) {
-      finalContent = checklistItems
+      return checklistItems
         .filter(item => item.text.trim())
         .map(item => `${item.checked ? "☑" : "☐"} ${item.text}`)
         .join("\n");
     }
+    return contentRef.current?.innerHTML || content;
+  };
+
+  const handleClose = () => {
+    const finalContent = getContent();
     if (title.trim() || finalContent.trim()) {
       onAddNote(title, finalContent, { color, pinned, archived: false });
     }
@@ -126,13 +130,7 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
   };
 
   const handleArchive = () => {
-    let finalContent = content;
-    if (isChecklist) {
-      finalContent = checklistItems
-        .filter(item => item.text.trim())
-        .map(item => `${item.checked ? "☑" : "☐"} ${item.text}`)
-        .join("\n");
-    }
+    const finalContent = getContent();
     if (title.trim() || finalContent.trim()) {
       onAddNote(title, finalContent, { color, pinned: false, archived: true });
     }
@@ -142,6 +140,7 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
   const resetState = () => {
     setTitle("");
     setContent("");
+    if (contentRef.current) contentRef.current.innerHTML = "";
     setColor("default");
     setPinned(false);
     setExpanded(false);
@@ -164,13 +163,10 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
     pushHistory(title, val);
   };
 
-  const handleTextarea = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    handleContentChange(e.target.value);
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = textarea.scrollHeight + "px";
-    }
+  const handleContentInput = () => {
+    const html = contentRef.current?.innerHTML || "";
+    setContent(html);
+    pushHistory(title, html);
   };
 
   const toggleChecklist = () => {
@@ -226,19 +222,10 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
     }
   };
 
-  // Insert formatting markers
-  const insertFormat = (prefix: string, suffix: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = content.substring(start, end);
-    const newContent = content.substring(0, start) + prefix + selected + suffix + content.substring(end);
-    handleContentChange(newContent);
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
-    }, 0);
+  // Rich text formatting via execCommand
+  const applyFormat = (command: string, value?: string) => {
+    contentRef.current?.focus();
+    document.execCommand(command, false, value);
   };
 
   const colorClass = getColorClass(color);
@@ -368,12 +355,12 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
               )}
             </div>
           ) : (
-            <textarea
-              ref={textareaRef}
-              placeholder="Ghi chú..."
-              value={content}
-              onChange={handleTextarea}
-              className="w-full px-4 mb-1 bg-transparent outline-none text-foreground text-sm placeholder:text-muted-foreground resize-none overflow-hidden"
+            <div
+              ref={contentRef}
+              contentEditable
+              onInput={handleContentInput}
+              data-placeholder="Ghi chú..."
+              className="w-full px-4 mb-1 bg-transparent outline-none text-foreground text-sm empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground min-h-[24px] whitespace-pre-wrap break-words"
             />
           )}
         </div>
@@ -381,23 +368,23 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
         {/* Formatting toolbar */}
         {showFormatting && !isChecklist && (
           <div className="flex items-center gap-0.5 px-2 py-1 border-t border-border/30">
-            <button onClick={() => insertFormat("**", "**")} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Đậm">
+            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("bold"); }} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Đậm">
               <Bold className="w-4 h-4 text-keep-toolbar" />
             </button>
-            <button onClick={() => insertFormat("_", "_")} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Nghiêng">
+            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("italic"); }} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Nghiêng">
               <Italic className="w-4 h-4 text-keep-toolbar" />
             </button>
-            <button onClick={() => insertFormat("<u>", "</u>")} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Gạch chân">
+            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("underline"); }} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Gạch chân">
               <Underline className="w-4 h-4 text-keep-toolbar" />
             </button>
-            <button onClick={() => insertFormat("~~", "~~")} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Gạch ngang">
+            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("strikeThrough"); }} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Gạch ngang">
               <Strikethrough className="w-4 h-4 text-keep-toolbar" />
             </button>
             <div className="w-px h-5 bg-border/50 mx-1" />
-            <button onClick={() => insertFormat("- ", "")} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Danh sách">
+            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("insertUnorderedList"); }} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Danh sách">
               <List className="w-4 h-4 text-keep-toolbar" />
             </button>
-            <button onClick={() => insertFormat("1. ", "")} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Danh sách số">
+            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("insertOrderedList"); }} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Danh sách số">
               <ListOrdered className="w-4 h-4 text-keep-toolbar" />
             </button>
           </div>
