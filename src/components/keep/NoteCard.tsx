@@ -27,7 +27,7 @@ interface NoteCardProps {
   onDelete: (id: string) => void;
   onColorChange: (id: string, color: string) => void;
   onArchive?: (id: string) => void;
-  onClick?: () => void;
+  onClick?: (rect: DOMRect) => void;
 }
 
 import { noteColors, getColorClass } from "./noteColors";
@@ -37,6 +37,7 @@ const NoteCard = ({ note, onPin, onDelete, onColorChange, onArchive, onClick }: 
   const [showColors, setShowColors] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const colorRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -56,7 +57,13 @@ const NoteCard = ({ note, onPin, onDelete, onColorChange, onArchive, onClick }: 
       className={`group relative rounded-lg keep-border hover:keep-shadow-hover transition-shadow cursor-pointer break-inside-avoid mb-4 ${getColorClass(
         note.color
       )}`}
-      onClick={onClick}
+      ref={cardRef}
+      onClick={() => {
+        if (onClick && cardRef.current) {
+          const rect = cardRef.current.getBoundingClientRect();
+          (onClick as any)(rect);
+        }
+      }}
     >
       {/* Pin button */}
       <button
