@@ -19,6 +19,19 @@ const Index = () => {
     setEditingNote(note);
   };
 
+  const renderNoteCard = (note: Note) => (
+    <NoteCard
+      key={note.id}
+      note={note}
+      onPin={pinNote}
+      onDelete={deleteNote}
+      onColorChange={changeColor}
+      onArchive={archiveNote}
+      onClick={(rect) => handleNoteClick(note, rect)}
+      hidden={editingNote?.id === note.id}
+    />
+  );
+
   return (
     <>
       <NoteInput onAddNote={addNote} />
@@ -29,17 +42,7 @@ const Index = () => {
             Đã ghim
           </p>
           <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 mb-8">
-            {pinnedNotes.map((note) => (
-              <NoteCard
-                key={note.id}
-                note={note}
-                onPin={pinNote}
-                onDelete={deleteNote}
-                onColorChange={changeColor}
-                onArchive={archiveNote}
-                onClick={(rect) => handleNoteClick(note, rect)}
-              />
-            ))}
+            {pinnedNotes.map(renderNoteCard)}
           </div>
         </>
       )}
@@ -50,17 +53,7 @@ const Index = () => {
         </p>
       )}
       <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-6 gap-4">
-        {otherNotes.map((note) => (
-          <NoteCard
-            key={note.id}
-            note={note}
-            onPin={pinNote}
-            onDelete={deleteNote}
-            onColorChange={changeColor}
-            onArchive={archiveNote}
-            onClick={(rect) => handleNoteClick(note, rect)}
-          />
-        ))}
+        {otherNotes.map(renderNoteCard)}
       </div>
 
       {currentEditNote && (

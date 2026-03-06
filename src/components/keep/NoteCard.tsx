@@ -28,11 +28,12 @@ interface NoteCardProps {
   onColorChange: (id: string, color: string) => void;
   onArchive?: (id: string) => void;
   onClick?: (rect: DOMRect) => void;
+  hidden?: boolean;
 }
 
 import { noteColors, getColorClass } from "./noteColors";
 
-const NoteCard = ({ note, onPin, onDelete, onColorChange, onArchive, onClick }: NoteCardProps) => {
+const NoteCard = ({ note, onPin, onDelete, onColorChange, onArchive, onClick, hidden }: NoteCardProps) => {
   const [showMore, setShowMore] = useState(false);
   const [showColors, setShowColors] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -56,7 +57,7 @@ const NoteCard = ({ note, onPin, onDelete, onColorChange, onArchive, onClick }: 
     <div
       className={`group relative rounded-lg keep-border hover:keep-shadow-hover transition-shadow cursor-pointer break-inside-avoid mb-4 ${getColorClass(
         note.color
-      )}`}
+      )} ${hidden ? 'invisible' : ''}`}
       ref={cardRef}
       onClick={() => {
         if (onClick && cardRef.current) {
