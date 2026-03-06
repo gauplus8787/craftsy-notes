@@ -35,6 +35,7 @@ interface NoteEditDialogProps {
   onArchive: (id: string) => void;
   onPin: (id: string) => void;
   onColorChange: (id: string, color: string) => void;
+  sourceRect?: DOMRect | null;
 }
 
 interface HistoryEntry {
@@ -51,6 +52,7 @@ const NoteEditDialog = ({
   onArchive,
   onPin,
   onColorChange,
+  sourceRect,
 }: NoteEditDialogProps) => {
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
@@ -60,6 +62,7 @@ const NoteEditDialog = ({
   const [isChecklist, setIsChecklist] = useState(false);
   const [checklistItems, setChecklistItems] = useState<{ text: string; checked: boolean }[]>([]);
   const [showCompleted, setShowCompleted] = useState(true);
+  const [animating, setAnimating] = useState(true);
 
   const [history, setHistory] = useState<HistoryEntry[]>([{ title: note.title, content: note.content }]);
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -99,6 +102,16 @@ const NoteEditDialog = ({
       }
     }
   }, [note, open]);
+
+  // Animate in
+  useEffect(() => {
+    if (open) {
+      setAnimating(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setAnimating(false));
+      });
+    }
+  }, [open]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -245,14 +258,31 @@ const NoteEditDialog = ({
   const uncheckedItems = checklistItems.map((item, i) => ({ ...item, originalIndex: i })).filter(item => !item.checked);
   const checkedItems = checklistItems.map((item, i) => ({ ...item, originalIndex: i })).filter(item => item.checked);
 
+  // Calculate initial transform from source rect
+  const getInitialStyle = (): React.CSSProperties => {
+    if (!sourceRect || !animating) return {};
+    const targetLeft = window.innerWidth / 2 - 300; // max-w-[600px] / 2
+    const targetTop = window.innerHeight * 0.1;
+    const scaleX = sourceRect.width / 600;
+    const scaleY = sourceRect.height / Math.max(sourceRect.height * 2, 300);
+    const translateX = sourceRect.left - targetLeft;
+    const translateY = sourceRect.top - targetTop;
+    return {
+      transform: `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`,
+      transformOrigin: 'top left',
+      opacity: 0.8,
+    };
+  };
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] bg-black/50"
+      className={`fixed inset-0 z-50 flex items-start justify-center pt-[10vh] transition-colors duration-200 ${animating ? 'bg-black/0' : 'bg-black/50'}`}
       onClick={handleOverlayClick}
     >
       <div
         ref={dialogRef}
-        className={`w-full max-w-[600px] rounded-lg keep-shadow relative ${colorClass} max-h-[80vh] flex flex-col`}
+        className={`w-full max-w-[600px] rounded-lg keep-shadow relative ${colorClass} max-h-[80vh] flex flex-col transition-all duration-200 ease-out`}
+        style={animating ? getInitialStyle() : { transform: 'none', opacity: 1 }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Pin */}
