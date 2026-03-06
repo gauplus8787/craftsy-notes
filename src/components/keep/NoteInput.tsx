@@ -17,13 +17,11 @@ import {
   Strikethrough,
   List,
   ListOrdered,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
   X,
   Baseline,
   Tag,
   Copy,
+  GripVertical
 } from "lucide-react";
 import { noteColors, getColorClass } from "./noteColors";
 
@@ -296,6 +294,7 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
             <div className="px-2 space-y-0.5">
               {checklistItems.map((item, index) => (
                 <div key={index} className="flex items-center gap-1 group/item">
+                  <GripVertical/>
                   <input
                     type="checkbox"
                     checked={item.checked}
@@ -307,8 +306,7 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
                     value={item.text}
                     onChange={(e) => updateChecklistItem(index, e.target.value)}
                     onKeyDown={(e) => handleChecklistKeyDown(index, e)}
-                    placeholder="Mục trong danh sách"
-                    className={`checklist-input flex-1 px-1 py-1.5 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground ${item.checked ? "line-through text-muted-foreground" : ""}`}
+                    className={`checklist-input flex-1 px-1 py-1.5 bg-transparent outline-none text-sm text-foreground ${item.checked ? "line-through text-muted-foreground" : ""}`}
                   />
                   <button
                     onClick={() => removeChecklistItem(index)}
