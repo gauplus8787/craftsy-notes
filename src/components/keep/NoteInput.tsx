@@ -15,13 +15,14 @@ import {
   Italic,
   Underline,
   Strikethrough,
-  List,
-  ListOrdered,
   X,
   Baseline,
   Tag,
   Copy,
-  GripVertical
+  GripVertical,
+  Heading1,
+  Heading2,
+  Type
 } from "lucide-react";
 import { noteColors, getColorClass } from "./noteColors";
 
@@ -105,11 +106,30 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
     const handleClick = (e: MouseEvent) => {
       if (moreRef.current && !moreRef.current.contains(e.target as Node)) setShowMore(false);
       if (colorRef.current && !colorRef.current.contains(e.target as Node)) setShowColors(false);
-      if (formatRef.current && !formatRef.current.contains(e.target as Node)) setShowFormatting(false);
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  // Track active formatting states
+  const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
+
+  const updateActiveFormats = useCallback(() => {
+    const formats = new Set<string>();
+    if (document.queryCommandState("bold")) formats.add("bold");
+    if (document.queryCommandState("italic")) formats.add("italic");
+    if (document.queryCommandState("underline")) formats.add("underline");
+    if (document.queryCommandState("strikeThrough")) formats.add("strikeThrough");
+    // Check block format
+    const block = document.queryCommandValue("formatBlock");
+    if (block) formats.add(block.toLowerCase());
+    setActiveFormats(formats);
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("selectionchange", updateActiveFormats);
+    return () => document.removeEventListener("selectionchange", updateActiveFormats);
+  }, [updateActiveFormats]);
 
   const getContent = () => {
     if (isChecklist) {
@@ -226,6 +246,18 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
   const applyFormat = (command: string, value?: string) => {
     contentRef.current?.focus();
     document.execCommand(command, false, value);
+    setTimeout(updateActiveFormats, 0);
+  };
+
+  const applyHeading = (tag: string) => {
+    contentRef.current?.focus();
+    const current = document.queryCommandValue("formatBlock").toLowerCase();
+    if (current === tag) {
+      document.execCommand("formatBlock", false, "div");
+    } else {
+      document.execCommand("formatBlock", false, tag);
+    }
+    setTimeout(updateActiveFormats, 0);
   };
 
   const colorClass = getColorClass(color);
@@ -367,25 +399,60 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
 
         {/* Formatting toolbar */}
         {showFormatting && !isChecklist && (
-          <div className="flex items-center gap-0.5 px-2 py-1 border-t border-border/30">
-            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("bold"); }} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Đậm">
-              <Bold className="w-4 h-4 text-keep-toolbar" />
+          <div className="flex items-center gap-0.5 px-3 py-1.5 border-t border-border/30">
+            {/* Heading types */}
+            <button
+              onMouseDown={(e) => { e.preventDefault(); applyHeading("h1"); }}
+              className={`px-2.5 py-1.5 rounded text-sm font-semibold transition-colors ${activeFormats.has("h1") ? "bg-secondary text-foreground" : "hover:bg-secondary/50 text-keep-toolbar"}`}
+              title="Tiêu đề 1"
+            >
+              H1
             </button>
-            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("italic"); }} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Nghiêng">
-              <Italic className="w-4 h-4 text-keep-toolbar" />
+            <button
+              onMouseDown={(e) => { e.preventDefault(); applyHeading("h2"); }}
+              className={`px-2.5 py-1.5 rounded text-sm font-semibold transition-colors ${activeFormats.has("h2") ? "bg-secondary text-foreground" : "hover:bg-secondary/50 text-keep-toolbar"}`}
+              title="Tiêu đề 2"
+            >
+              H2
             </button>
-            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("underline"); }} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Gạch chân">
-              <Underline className="w-4 h-4 text-keep-toolbar" />
+            <button
+              onMouseDown={(e) => { e.preventDefault(); applyHeading("div"); }}
+              className={`p-1.5 rounded transition-colors ${!activeFormats.has("h1") && !activeFormats.has("h2") ? "bg-secondary text-foreground" : "hover:bg-secondary/50 text-keep-toolbar"}`}
+              title="Văn bản thường"
+            >
+              <Type className="w-4 h-4" />
             </button>
-            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("strikeThrough"); }} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Gạch ngang">
-              <Strikethrough className="w-4 h-4 text-keep-toolbar" />
+
+            <div className="w-px h-5 bg-border/50 mx-2" />
+
+            {/* Text styles */}
+            <button
+              onMouseDown={(e) => { e.preventDefault(); applyFormat("bold"); }}
+              className={`p-1.5 rounded transition-colors ${activeFormats.has("bold") ? "bg-secondary text-foreground" : "hover:bg-secondary/50 text-keep-toolbar"}`}
+              title="Đậm"
+            >
+              <Bold className="w-4 h-4" />
             </button>
-            <div className="w-px h-5 bg-border/50 mx-1" />
-            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("insertUnorderedList"); }} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Danh sách">
-              <List className="w-4 h-4 text-keep-toolbar" />
+            <button
+              onMouseDown={(e) => { e.preventDefault(); applyFormat("italic"); }}
+              className={`p-1.5 rounded transition-colors ${activeFormats.has("italic") ? "bg-secondary text-foreground" : "hover:bg-secondary/50 text-keep-toolbar"}`}
+              title="Nghiêng"
+            >
+              <Italic className="w-4 h-4" />
             </button>
-            <button onMouseDown={(e) => { e.preventDefault(); applyFormat("insertOrderedList"); }} className="p-2 rounded-full hover:bg-secondary/50 transition-colors" title="Danh sách số">
-              <ListOrdered className="w-4 h-4 text-keep-toolbar" />
+            <button
+              onMouseDown={(e) => { e.preventDefault(); applyFormat("underline"); }}
+              className={`p-1.5 rounded transition-colors ${activeFormats.has("underline") ? "bg-secondary text-foreground" : "hover:bg-secondary/50 text-keep-toolbar"}`}
+              title="Gạch chân"
+            >
+              <Underline className="w-4 h-4" />
+            </button>
+            <button
+              onMouseDown={(e) => { e.preventDefault(); applyFormat("strikeThrough"); }}
+              className={`p-1.5 rounded transition-colors ${activeFormats.has("strikeThrough") ? "bg-secondary text-foreground" : "hover:bg-secondary/50 text-keep-toolbar"}`}
+              title="Gạch ngang"
+            >
+              <Strikethrough className="w-4 h-4" />
             </button>
           </div>
         )}
@@ -407,7 +474,7 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
             {/* Color picker */}
             <div ref={colorRef} className="relative">
               <button
-                onClick={() => { setShowColors(!showColors); setShowMore(false); setShowFormatting(false); }}
+                onClick={() => { setShowColors(!showColors); setShowMore(false); }}
                 className="p-2 rounded-full hover:bg-secondary/50 transition-colors"
                 title="Màu nền"
               >
@@ -456,7 +523,7 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
             {/* More options */}
             <div ref={moreRef} className="relative">
               <button
-                onClick={() => { setShowMore(!showMore); setShowColors(false); setShowFormatting(false); }}
+                onClick={() => { setShowMore(!showMore); setShowColors(false); }}
                 className="p-2 rounded-full hover:bg-secondary/50 transition-colors"
                 title="Tuỳ chọn khác"
               >
