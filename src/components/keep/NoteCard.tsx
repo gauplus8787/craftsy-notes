@@ -89,9 +89,10 @@ const NoteCard = ({ note, onPin, onDelete, onColorChange, onArchive, onClick, hi
             {note.title}
           </h3>
         )}
-        <p className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">
-          {note.content}
-        </p>
+        <div
+          className="text-sm text-foreground/80 leading-relaxed note-content"
+          dangerouslySetInnerHTML={{ __html: note.content }}
+        />
       </div>
 
       {/* Toolbar */}
