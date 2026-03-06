@@ -83,7 +83,7 @@ const NoteCard = ({ note, onPin, onDelete, onColorChange, onArchive, onClick, hi
       </button>
 
       {/* Content */}
-      <div className="px-4 pt-3 pb-1">
+      <div className="px-4 pt-3 pb-1 pr-10">
         {note.title && (
           <h3 className="text-sm font-medium text-foreground mb-1 pr-8">
             {note.title}
