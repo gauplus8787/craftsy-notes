@@ -62,6 +62,7 @@ const NoteEditDialog = ({
   const [isChecklist, setIsChecklist] = useState(false);
   const [checklistItems, setChecklistItems] = useState<{ text: string; checked: boolean }[]>([]);
   const [showCompleted, setShowCompleted] = useState(true);
+  const [phase, setPhase] = useState<'start' | 'animate' | 'done'>('start');
 
   const [history, setHistory] = useState<HistoryEntry[]>([{ title: note.title, content: note.content }]);
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -99,6 +100,14 @@ const NoteEditDialog = ({
         setIsChecklist(false);
         setChecklistItems([]);
       }
+      // Start animation
+      setPhase('start');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setPhase('animate'));
+      });
+      // Transition to done after animation
+      const timer = setTimeout(() => setPhase('done'), 250);
+      return () => clearTimeout(timer);
     }
   }, [note, open]);
 
@@ -248,9 +257,28 @@ const NoteEditDialog = ({
   const uncheckedItems = checklistItems.map((item, i) => ({ ...item, originalIndex: i })).filter(item => !item.checked);
   const checkedItems = checklistItems.map((item, i) => ({ ...item, originalIndex: i })).filter(item => item.checked);
 
+  const getDialogStyle = (): React.CSSProperties => {
+    if (phase === 'start' && sourceRect) {
+      return {
+        position: 'fixed',
+        top: sourceRect.top,
+        left: sourceRect.left,
+        width: sourceRect.width,
+        height: sourceRect.height,
+        maxWidth: sourceRect.width,
+        maxHeight: sourceRect.height,
+        transition: 'none',
+        overflow: 'hidden',
+      };
+    }
+    return {};
+  };
+
+  const isAnimating = phase === 'start';
+
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/50"
+      className={`fixed inset-0 z-50 transition-colors duration-200 ${isAnimating ? 'bg-black/0' : 'bg-black/50'}`}
       onClick={handleOverlayClick}
       aria-modal="true"
       role="dialog"
@@ -258,7 +286,8 @@ const NoteEditDialog = ({
       <div className="flex items-center justify-center min-h-full p-4">
         <div
           ref={dialogRef}
-          className={`w-full max-w-[600px] rounded-lg keep-shadow relative ${colorClass} max-h-[80vh] flex flex-col`}
+          className={`w-full max-w-[600px] rounded-lg keep-shadow relative ${colorClass} flex flex-col transition-all duration-200 ease-out ${isAnimating ? 'overflow-hidden' : 'max-h-[80vh]'}`}
+          style={getDialogStyle()}
           onClick={(e) => e.stopPropagation()}
         >
         {/* Pin */}
