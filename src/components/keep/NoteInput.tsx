@@ -45,6 +45,7 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
   const [showFormatting, setShowFormatting] = useState(false);
   const [isChecklist, setIsChecklist] = useState(false);
   const [checklistItems, setChecklistItems] = useState<{ text: string; checked: boolean }[]>([{ text: "", checked: false }]);
+  const [showCompleted, setShowCompleted] = useState(true);
 
   // Undo/Redo
   const [history, setHistory] = useState<HistoryEntry[]>([{ title: "", content: "" }]);
@@ -292,36 +293,79 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
         <div className="py-1">
           {isChecklist ? (
             <div className="px-2 space-y-0.5">
-              {checklistItems.map((item, index) => (
-                <div key={index} className="flex items-center gap-1 group/item">
-                  <GripVertical/>
-                  <input
-                    type="checkbox"
-                    checked={item.checked}
-                    onChange={() => toggleChecklistItem(index)}
-                    className="w-4 h-4 ml-2 rounded border-muted-foreground/50 accent-primary cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    value={item.text}
-                    onChange={(e) => updateChecklistItem(index, e.target.value)}
-                    onKeyDown={(e) => handleChecklistKeyDown(index, e)}
-                    className={`checklist-input flex-1 px-1 py-1.5 bg-transparent outline-none text-sm text-foreground ${item.checked ? "line-through text-muted-foreground" : ""}`}
-                  />
-                  <button
-                    onClick={() => removeChecklistItem(index)}
-                    className="p-1 rounded-full opacity-0 group-hover/item:opacity-100 hover:bg-secondary/50 transition-opacity"
-                  >
-                    <X className="w-3.5 h-3.5 text-keep-icon" />
-                  </button>
-                </div>
-              ))}
+              {/* Unchecked items */}
+              {checklistItems.filter(item => !item.checked).length > 0 && (
+                checklistItems.map((item, index) => !item.checked && (
+                  <div key={index} className="flex items-center gap-1 group/item">
+                    <GripVertical className="w-4 h-4 text-muted-foreground/40 cursor-grab opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                    <input
+                      type="checkbox"
+                      checked={false}
+                      onChange={() => toggleChecklistItem(index)}
+                      className="w-[18px] h-[18px] rounded border-muted-foreground/50 accent-primary cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={item.text}
+                      onChange={(e) => updateChecklistItem(index, e.target.value)}
+                      onKeyDown={(e) => handleChecklistKeyDown(index, e)}
+                      placeholder="Mục danh sách"
+                      className="checklist-input flex-1 px-2 py-1.5 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
+                    />
+                    <button
+                      onClick={() => removeChecklistItem(index)}
+                      className="p-1 rounded-full opacity-0 group-hover/item:opacity-100 hover:bg-secondary/50 transition-opacity"
+                    >
+                      <X className="w-3.5 h-3.5 text-keep-icon" />
+                    </button>
+                  </div>
+                ))
+              )}
+
+              {/* Add item button */}
               <button
                 onClick={() => setChecklistItems([...checklistItems, { text: "", checked: false }])}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-2 px-5 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                + Mục trong danh sách
+                <span className="text-lg leading-none">+</span> Mục danh sách
               </button>
+
+              {/* Completed items section */}
+              {checklistItems.some(item => item.checked) && (
+                <div className="border-t border-border/40 mt-1 pt-1">
+                  <button
+                    onClick={() => setShowCompleted(!showCompleted)}
+                    className="flex items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
+                  >
+                    <svg className={`w-4 h-4 transition-transform ${showCompleted ? "rotate-0" : "-rotate-90"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                    {checklistItems.filter(i => i.checked).length} mục đã hoàn tất
+                  </button>
+                  {showCompleted && checklistItems.map((item, index) => item.checked && (
+                    <div key={index} className="flex items-center gap-1 group/item">
+                      <GripVertical className="w-4 h-4 text-muted-foreground/40 cursor-grab opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                      <input
+                        type="checkbox"
+                        checked={true}
+                        onChange={() => toggleChecklistItem(index)}
+                        className="w-[18px] h-[18px] rounded border-muted-foreground/50 accent-primary cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={item.text}
+                        onChange={(e) => updateChecklistItem(index, e.target.value)}
+                        onKeyDown={(e) => handleChecklistKeyDown(index, e)}
+                        className="checklist-input flex-1 px-2 py-1.5 bg-transparent outline-none text-sm line-through text-muted-foreground"
+                      />
+                      <button
+                        onClick={() => removeChecklistItem(index)}
+                        className="p-1 rounded-full opacity-0 group-hover/item:opacity-100 hover:bg-secondary/50 transition-opacity"
+                      >
+                        <X className="w-3.5 h-3.5 text-keep-icon" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <textarea
