@@ -16,14 +16,14 @@ const initialNotes: Note[] = [
 export const useNotes = () => {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
 
-  const addNote = (title: string, content: string) => {
+  const addNote = (title: string, content: string, options?: { color?: string; pinned?: boolean; archived?: boolean }) => {
     const newNote: Note = {
       id: Date.now().toString(),
       title,
       content,
-      color: "default",
-      pinned: false,
-      archived: false,
+      color: options?.color || "default",
+      pinned: options?.pinned || false,
+      archived: options?.archived || false,
     };
     setNotes([newNote, ...notes]);
   };
