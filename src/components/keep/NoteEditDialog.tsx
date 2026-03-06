@@ -139,6 +139,7 @@ const NoteEditDialog = ({
       setHistoryIndex(i);
       setTitle(history[i].title);
       setContent(history[i].content);
+      if (contentRef.current) contentRef.current.innerHTML = history[i].content;
     }
   };
 
@@ -148,6 +149,7 @@ const NoteEditDialog = ({
       setHistoryIndex(i);
       setTitle(history[i].title);
       setContent(history[i].content);
+      if (contentRef.current) contentRef.current.innerHTML = history[i].content;
     }
   };
 

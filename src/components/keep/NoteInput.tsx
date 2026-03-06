@@ -78,6 +78,7 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
       setHistoryIndex(newIndex);
       setTitle(history[newIndex].title);
       setContent(history[newIndex].content);
+      if (contentRef.current) contentRef.current.innerHTML = history[newIndex].content;
     }
   };
 
@@ -87,6 +88,7 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
       setHistoryIndex(newIndex);
       setTitle(history[newIndex].title);
       setContent(history[newIndex].content);
+      if (contentRef.current) contentRef.current.innerHTML = history[newIndex].content;
     }
   };
 
