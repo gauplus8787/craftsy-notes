@@ -172,7 +172,22 @@
     @apply bg-background text-foreground;
     font-family: 'Roboto', 'Google Sans', sans-serif;
   }
+
+  /* Rich text heading styles inside contentEditable */
+  [contenteditable] h1,
+  .note-content h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 2rem;
+  }
+  [contenteditable] h2,
+  .note-content h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.75rem;
+  }
 }
+
 @utility keep-header-shadow {
   box-shadow: 
     0 4px 5px 0 rgba(0, 0, 0, .14),
