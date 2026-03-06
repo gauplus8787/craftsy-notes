@@ -1,12 +1,18 @@
+import { useState } from "react";
 import NoteInput from "@/components/keep/NoteInput";
-import NoteCard from "@/components/keep/NoteCard";
+import NoteCard, { type Note } from "@/components/keep/NoteCard";
+import NoteEditDialog from "@/components/keep/NoteEditDialog";
 import { useNotesContext } from "@/contexts/NotesContext";
 
 const Index = () => {
-  const { activeNotes, addNote, pinNote, deleteNote, archiveNote, changeColor } = useNotesContext();
+  const { activeNotes, addNote, pinNote, deleteNote, archiveNote, changeColor, updateNote } = useNotesContext();
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
 
   const pinnedNotes = activeNotes.filter((n) => n.pinned);
   const otherNotes = activeNotes.filter((n) => !n.pinned);
+
+  // Get the latest version of the editing note
+  const currentEditNote = editingNote ? activeNotes.find(n => n.id === editingNote.id) || editingNote : null;
 
   return (
     <>
@@ -26,6 +32,7 @@ const Index = () => {
                 onDelete={deleteNote}
                 onColorChange={changeColor}
                 onArchive={archiveNote}
+                onClick={() => setEditingNote(note)}
               />
             ))}
           </div>
@@ -46,9 +53,23 @@ const Index = () => {
             onDelete={deleteNote}
             onColorChange={changeColor}
             onArchive={archiveNote}
+            onClick={() => setEditingNote(note)}
           />
         ))}
       </div>
+
+      {currentEditNote && (
+        <NoteEditDialog
+          note={currentEditNote}
+          open={!!currentEditNote}
+          onClose={() => setEditingNote(null)}
+          onUpdate={updateNote}
+          onDelete={(id) => { deleteNote(id); setEditingNote(null); }}
+          onArchive={(id) => { archiveNote(id); setEditingNote(null); }}
+          onPin={pinNote}
+          onColorChange={changeColor}
+        />
+      )}
     </>
   );
 };
