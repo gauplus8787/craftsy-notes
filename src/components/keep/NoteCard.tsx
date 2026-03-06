@@ -27,11 +27,12 @@ interface NoteCardProps {
   onDelete: (id: string) => void;
   onColorChange: (id: string, color: string) => void;
   onArchive?: (id: string) => void;
+  onClick?: () => void;
 }
 
 import { noteColors, getColorClass } from "./noteColors";
 
-const NoteCard = ({ note, onPin, onDelete, onColorChange, onArchive }: NoteCardProps) => {
+const NoteCard = ({ note, onPin, onDelete, onColorChange, onArchive, onClick }: NoteCardProps) => {
   const [showMore, setShowMore] = useState(false);
   const [showColors, setShowColors] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -52,13 +53,14 @@ const NoteCard = ({ note, onPin, onDelete, onColorChange, onArchive }: NoteCardP
 
   return (
     <div
-      className={`group relative rounded-lg keep-border hover:keep-shadow-hover transition-shadow cursor-default break-inside-avoid mb-4 ${getColorClass(
+      className={`group relative rounded-lg keep-border hover:keep-shadow-hover transition-shadow cursor-pointer break-inside-avoid mb-4 ${getColorClass(
         note.color
       )}`}
+      onClick={onClick}
     >
       {/* Pin button */}
       <button
-        onClick={() => onPin(note.id)}
+        onClick={(e) => { e.stopPropagation(); onPin(note.id); }}
         className={`absolute top-2 right-2 p-2 rounded-full transition-opacity ${
           note.pinned
             ? "opacity-100"
@@ -85,7 +87,7 @@ const NoteCard = ({ note, onPin, onDelete, onColorChange, onArchive }: NoteCardP
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-0.5 px-1.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-0.5 px-1.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
         {/* Color picker */}
         <div ref={colorRef} className="relative">
           <button

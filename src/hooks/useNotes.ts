@@ -52,6 +52,10 @@ export const useNotes = () => {
     setNotes(notes.map((n) => (n.id === id ? { ...n, color } : n)));
   };
 
+  const updateNote = (id: string, updates: Partial<Note>) => {
+    setNotes(notes.map((n) => (n.id === id ? { ...n, ...updates } : n)));
+  };
+
   const activeNotes = notes.filter((n) => !n.archived && !n.deleted);
   const archivedNotes = notes.filter((n) => n.archived && !n.deleted);
   const deletedNotes = notes.filter((n) => n.deleted);
@@ -68,5 +72,6 @@ export const useNotes = () => {
     restoreNote,
     archiveNote,
     changeColor,
+    updateNote,
   };
 };
