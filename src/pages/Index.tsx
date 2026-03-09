@@ -1,11 +1,24 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
 import NoteInput from "@/components/keep/NoteInput";
-import NoteCard, { type Note } from "@/components/keep/NoteCard";
+import { type Note } from "@/components/keep/NoteCard";
+import SortableNoteCard from "@/components/keep/SortableNoteCard";
 import NoteEditDialog from "@/components/keep/NoteEditDialog";
 import { useNotesContext } from "@/contexts/NotesContext";
 
 const Index = () => {
-  const { activeNotes, addNote, pinNote, deleteNote, archiveNote, changeColor, updateNote } = useNotesContext();
+  const { activeNotes, addNote, pinNote, deleteNote, archiveNote, changeColor, updateNote, reorderNotes } = useNotesContext();
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [sourceRect, setSourceRect] = useState<DOMRect | null>(null);
 
@@ -14,13 +27,26 @@ const Index = () => {
 
   const currentEditNote = editingNote ? activeNotes.find(n => n.id === editingNote.id) || editingNote : null;
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      reorderNotes(active.id as string, over.id as string);
+    }
+  };
+
   const handleNoteClick = (note: Note, rect: DOMRect) => {
     setSourceRect(rect);
     setEditingNote(note);
   };
 
   const renderNoteCard = (note: Note) => (
-    <NoteCard
+    <SortableNoteCard
       key={note.id}
       note={note}
       onPin={pinNote}
@@ -36,25 +62,31 @@ const Index = () => {
     <>
       <NoteInput onAddNote={addNote} />
 
-      {pinnedNotes.length > 0 && (
-        <>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-2">
-            Đã ghim
-          </p>
-          <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 mb-8">
-            {pinnedNotes.map(renderNoteCard)}
-          </div>
-        </>
-      )}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        {pinnedNotes.length > 0 && (
+          <>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-2">
+              Đã ghim
+            </p>
+            <SortableContext items={pinnedNotes.map(n => n.id)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+                {pinnedNotes.map(renderNoteCard)}
+              </div>
+            </SortableContext>
+          </>
+        )}
 
-      {otherNotes.length > 0 && pinnedNotes.length > 0 && (
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-2">
-          Khác
-        </p>
-      )}
-      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-6 gap-4">
-        {otherNotes.map(renderNoteCard)}
-      </div>
+        {otherNotes.length > 0 && pinnedNotes.length > 0 && (
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-2">
+            Khác
+          </p>
+        )}
+        <SortableContext items={otherNotes.map(n => n.id)} strategy={rectSortingStrategy}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
+            {otherNotes.map(renderNoteCard)}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {currentEditNote && (
         <NoteEditDialog

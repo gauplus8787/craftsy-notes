@@ -60,6 +60,18 @@ export const useNotes = () => {
   const archivedNotes = notes.filter((n) => n.archived && !n.deleted);
   const deletedNotes = notes.filter((n) => n.deleted);
 
+  const reorderNotes = (fromId: string, toId: string) => {
+    setNotes((prev) => {
+      const oldIndex = prev.findIndex((n) => n.id === fromId);
+      const newIndex = prev.findIndex((n) => n.id === toId);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      const updated = [...prev];
+      const [moved] = updated.splice(oldIndex, 1);
+      updated.splice(newIndex, 0, moved);
+      return updated;
+    });
+  };
+
   return {
     notes,
     activeNotes,
@@ -73,5 +85,6 @@ export const useNotes = () => {
     archiveNote,
     changeColor,
     updateNote,
+    reorderNotes,
   };
 };
