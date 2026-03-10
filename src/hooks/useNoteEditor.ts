@@ -202,8 +202,6 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
     setShowMore(false);
     setShowColors(false);
     setShowFormatting(false);
-    setHistory([{ title: noteTitle, content: noteContent }]);
-    setHistoryIndex(0);
 
     // Detect checklist
     const lines = noteContent.split("\n");
