@@ -90,8 +90,7 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
 
   const handleTitleChange = useCallback((val: string) => {
     setTitle(val);
-    pushHistory(val, content);
-  }, [content, pushHistory]);
+  }, []);
 
   // Not needed for tiptap but keep for compatibility
   const handleContentInput = useCallback(() => {}, []);
