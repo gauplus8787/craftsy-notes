@@ -67,42 +67,16 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
     setActiveFormats(formats);
   }, []);
 
-  // Use ref for pushHistory to avoid stale closures in tiptap callbacks
-  const pushHistoryRef = useRef((t: string, c: string) => {});
-  
-  const pushHistory = useCallback((t: string, c: string) => {
-    if (historyTimeout.current) clearTimeout(historyTimeout.current);
-    historyTimeout.current = setTimeout(() => {
-      setHistory(prev => {
-        const newHistory = prev.slice(0, historyIndex + 1);
-        newHistory.push({ title: t, content: c });
-        return newHistory;
-      });
-      setHistoryIndex(prev => prev + 1);
-    }, 500);
-  }, [historyIndex]);
-
-  pushHistoryRef.current = pushHistory;
-
   const undo = useCallback(() => {
-    if (historyIndex > 0) {
-      const i = historyIndex - 1;
-      setHistoryIndex(i);
-      setTitle(history[i].title);
-      setContent(history[i].content);
-      editor?.commands.setContent(history[i].content);
-    }
-  }, [historyIndex, history, editor]);
+    editor?.commands.undo();
+  }, [editor]);
 
   const redo = useCallback(() => {
-    if (historyIndex < history.length - 1) {
-      const i = historyIndex + 1;
-      setHistoryIndex(i);
-      setTitle(history[i].title);
-      setContent(history[i].content);
-      editor?.commands.setContent(history[i].content);
-    }
-  }, [historyIndex, history, editor]);
+    editor?.commands.redo();
+  }, [editor]);
+
+  const canUndo = editor?.can().undo() ?? false;
+  const canRedo = editor?.can().redo() ?? false;
 
   // Close dropdowns on outside click
   useEffect(() => {
