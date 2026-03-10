@@ -8,11 +8,6 @@ export interface ChecklistItem {
   checked: boolean;
 }
 
-export interface HistoryEntry {
-  title: string;
-  content: string;
-}
-
 interface UseNoteEditorOptions {
   initialTitle?: string;
   initialContent?: string;
