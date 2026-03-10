@@ -35,7 +35,6 @@ const NoteEditDialog = ({
   useEffect(() => {
     if (open) {
       editor.initFromContent(note.title, note.content);
-      // Start animation
       setPhase('start');
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setPhase('animate'));
@@ -44,15 +43,6 @@ const NoteEditDialog = ({
       return () => clearTimeout(timer);
     }
   }, [note, open]);
-
-  // Set initial HTML content
-  useEffect(() => {
-    if (editor.contentRef.current && open && !editor.isChecklist) {
-      if (editor.contentRef.current.innerHTML !== editor.content) {
-        editor.contentRef.current.innerHTML = editor.content;
-      }
-    }
-  }, [open, editor.isChecklist]);
 
   const handleSaveAndClose = () => {
     const finalContent = editor.getContent();
@@ -126,8 +116,7 @@ const NoteEditDialog = ({
               isChecklist={editor.isChecklist}
               checklistItems={editor.checklistItems}
               showCompleted={editor.showCompleted}
-              contentRef={editor.contentRef as React.RefObject<HTMLDivElement>}
-              onContentInput={editor.handleContentInput}
+              editor={editor.editor}
               onToggleChecklistItem={editor.toggleChecklistItem}
               onUpdateChecklistItem={editor.updateChecklistItem}
               onChecklistKeyDown={editor.handleChecklistKeyDown}

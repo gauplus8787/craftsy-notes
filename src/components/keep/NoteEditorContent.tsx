@@ -1,12 +1,12 @@
 import { GripVertical, X } from "lucide-react";
+import { EditorContent, type Editor } from "@tiptap/react";
 import type { ChecklistItem } from "@/hooks/useNoteEditor";
 
 interface NoteEditorContentProps {
   isChecklist: boolean;
   checklistItems: ChecklistItem[];
   showCompleted: boolean;
-  contentRef: React.RefObject<HTMLDivElement>;
-  onContentInput: () => void;
+  editor: Editor | null;
   onToggleChecklistItem: (index: number) => void;
   onUpdateChecklistItem: (index: number, text: string) => void;
   onChecklistKeyDown: (index: number, e: React.KeyboardEvent) => void;
@@ -17,8 +17,8 @@ interface NoteEditorContentProps {
 }
 
 const NoteEditorContent = ({
-  isChecklist, checklistItems, showCompleted, contentRef,
-  onContentInput, onToggleChecklistItem, onUpdateChecklistItem,
+  isChecklist, checklistItems, showCompleted, editor,
+  onToggleChecklistItem, onUpdateChecklistItem,
   onChecklistKeyDown, onRemoveChecklistItem, onAddChecklistItem,
   onSetShowCompleted, minHeight = "24px",
 }: NoteEditorContentProps) => {
@@ -101,14 +101,9 @@ const NoteEditorContent = ({
   }
 
   return (
-    <div
-      ref={contentRef}
-      contentEditable
-      onInput={onContentInput}
-      data-placeholder="Ghi chú..."
-      className={`w-full px-4 mb-1 bg-transparent outline-none text-foreground text-sm empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground whitespace-pre-wrap break-words`}
-      style={{ minHeight }}
-    />
+    <div className="w-full px-4 mb-1 text-sm" style={{ minHeight }}>
+      <EditorContent editor={editor} className="tiptap-editor outline-none" />
+    </div>
   );
 };
 

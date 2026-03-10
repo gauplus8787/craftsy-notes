@@ -106,8 +106,7 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
             isChecklist={editor.isChecklist}
             checklistItems={editor.checklistItems}
             showCompleted={editor.showCompleted}
-            contentRef={editor.contentRef as React.RefObject<HTMLDivElement>}
-            onContentInput={editor.handleContentInput}
+            editor={editor.editor}
             onToggleChecklistItem={editor.toggleChecklistItem}
             onUpdateChecklistItem={editor.updateChecklistItem}
             onChecklistKeyDown={editor.handleChecklistKeyDown}

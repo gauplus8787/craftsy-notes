@@ -2,14 +2,13 @@ import { Bold, Italic, Underline, Strikethrough, Type } from "lucide-react";
 
 interface NoteFormattingToolbarProps {
   activeFormats: Set<string>;
-  onApplyFormat: (command: string, value?: string) => void;
+  onApplyFormat: (command: string) => void;
   onApplyHeading: (tag: string) => void;
 }
 
 const NoteFormattingToolbar = ({ activeFormats, onApplyFormat, onApplyHeading }: NoteFormattingToolbarProps) => {
   return (
     <div className="flex items-center gap-0.5 px-3 py-1.5 border-t border-border/30">
-      {/* Heading types */}
       <button
         onMouseDown={(e) => { e.preventDefault(); onApplyHeading("h1"); }}
         className={`px-2.5 py-1.5 rounded text-sm font-semibold transition-colors ${activeFormats.has("h1") ? "bg-secondary text-foreground" : "hover:bg-secondary/50 text-keep-toolbar"}`}
@@ -34,7 +33,6 @@ const NoteFormattingToolbar = ({ activeFormats, onApplyFormat, onApplyHeading }:
 
       <div className="w-px h-5 bg-border/50 mx-2" />
 
-      {/* Text styles */}
       <button
         onMouseDown={(e) => { e.preventDefault(); onApplyFormat("bold"); }}
         className={`p-1.5 rounded transition-colors ${activeFormats.has("bold") ? "bg-secondary text-foreground" : "hover:bg-secondary/50 text-keep-toolbar"}`}
