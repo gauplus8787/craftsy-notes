@@ -139,10 +139,10 @@ const NoteToolbar = ({
         </div>
 
         {/* Undo / Redo */}
-        <button onClick={onUndo} disabled={historyIndex <= 0} className="p-2 rounded-full hover:bg-secondary/50 transition-colors disabled:opacity-30" title="Hoàn tác">
+        <button onClick={onUndo} disabled={!canUndo} className="p-2 rounded-full hover:bg-secondary/50 transition-colors disabled:opacity-30" title="Hoàn tác">
           <Undo2 className="w-4 h-4 text-keep-toolbar" />
         </button>
-        <button onClick={onRedo} disabled={historyIndex >= historyLength - 1} className="p-2 rounded-full hover:bg-secondary/50 transition-colors disabled:opacity-30" title="Làm lại">
+        <button onClick={onRedo} disabled={!canRedo} className="p-2 rounded-full hover:bg-secondary/50 transition-colors disabled:opacity-30" title="Làm lại">
           <Redo2 className="w-4 h-4 text-keep-toolbar" />
         </button>
       </div>
