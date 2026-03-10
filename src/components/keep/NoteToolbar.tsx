@@ -34,7 +34,7 @@ interface NoteToolbarProps {
 
 const NoteToolbar = ({
   showFormatting, showColors, showMore, isChecklist, currentColor,
-  historyIndex, historyLength, colorRef, moreRef,
+  canUndo, canRedo, colorRef, moreRef,
   onToggleFormatting, onToggleColors, onToggleMore, onColorSelect,
   onArchive, onToggleChecklist, onUndo, onRedo, onClose, onDelete,
   dropdownDirection = "down",
