@@ -12,8 +12,8 @@ interface NoteToolbarProps {
   showMore: boolean;
   isChecklist: boolean;
   currentColor: string;
-  historyIndex: number;
-  historyLength: number;
+  canUndo: boolean;
+  canRedo: boolean;
   // Refs
   colorRef: React.RefObject<HTMLDivElement>;
   moreRef: React.RefObject<HTMLDivElement>;
