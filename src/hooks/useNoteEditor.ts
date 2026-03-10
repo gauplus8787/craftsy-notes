@@ -193,8 +193,6 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
     setIsChecklist(false);
     setChecklistItems([]);
     setShowCompleted(true);
-    setHistory([{ title: newTitle, content: newContent }]);
-    setHistoryIndex(0);
   }, [editor]);
 
   const initFromContent = useCallback((noteTitle: string, noteContent: string) => {
