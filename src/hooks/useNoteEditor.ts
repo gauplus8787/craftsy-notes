@@ -224,7 +224,7 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
   return {
     // State
     title, content, showMore, showColors, showFormatting, isChecklist,
-    checklistItems, showCompleted, activeFormats, history, historyIndex,
+    checklistItems, showCompleted, activeFormats, canUndo, canRedo,
     // Refs
     moreRef, colorRef,
     // Tiptap editor instance
