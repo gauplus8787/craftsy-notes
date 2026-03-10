@@ -45,10 +45,8 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
     content: initialContent,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
-      // Tiptap returns <p></p> for empty content
       const normalized = html === "<p></p>" ? "" : html;
       setContent(normalized);
-      pushHistoryRef.current(title, normalized);
     },
     onSelectionUpdate: ({ editor }) => {
       updateFormatsFromEditor(editor);
