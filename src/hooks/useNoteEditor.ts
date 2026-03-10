@@ -30,10 +30,6 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
   const [showCompleted, setShowCompleted] = useState(true);
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
 
-  // Undo/Redo
-  const [history, setHistory] = useState<HistoryEntry[]>([{ title: initialTitle, content: initialContent }]);
-  const [historyIndex, setHistoryIndex] = useState(0);
-  const historyTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const moreRef = useRef<HTMLDivElement>(null);
   const colorRef = useRef<HTMLDivElement>(null);
