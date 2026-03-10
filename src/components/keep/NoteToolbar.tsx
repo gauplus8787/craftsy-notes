@@ -12,8 +12,8 @@ interface NoteToolbarProps {
   showMore: boolean;
   isChecklist: boolean;
   currentColor: string;
-  historyIndex: number;
-  historyLength: number;
+  canUndo: boolean;
+  canRedo: boolean;
   // Refs
   colorRef: React.RefObject<HTMLDivElement>;
   moreRef: React.RefObject<HTMLDivElement>;
@@ -34,7 +34,7 @@ interface NoteToolbarProps {
 
 const NoteToolbar = ({
   showFormatting, showColors, showMore, isChecklist, currentColor,
-  historyIndex, historyLength, colorRef, moreRef,
+  canUndo, canRedo, colorRef, moreRef,
   onToggleFormatting, onToggleColors, onToggleMore, onColorSelect,
   onArchive, onToggleChecklist, onUndo, onRedo, onClose, onDelete,
   dropdownDirection = "down",
@@ -139,10 +139,10 @@ const NoteToolbar = ({
         </div>
 
         {/* Undo / Redo */}
-        <button onClick={onUndo} disabled={historyIndex <= 0} className="p-2 rounded-full hover:bg-secondary/50 transition-colors disabled:opacity-30" title="Hoàn tác">
+        <button onClick={onUndo} disabled={!canUndo} className="p-2 rounded-full hover:bg-secondary/50 transition-colors disabled:opacity-30" title="Hoàn tác">
           <Undo2 className="w-4 h-4 text-keep-toolbar" />
         </button>
-        <button onClick={onRedo} disabled={historyIndex >= historyLength - 1} className="p-2 rounded-full hover:bg-secondary/50 transition-colors disabled:opacity-30" title="Làm lại">
+        <button onClick={onRedo} disabled={!canRedo} className="p-2 rounded-full hover:bg-secondary/50 transition-colors disabled:opacity-30" title="Làm lại">
           <Redo2 className="w-4 h-4 text-keep-toolbar" />
         </button>
       </div>

@@ -8,11 +8,6 @@ export interface ChecklistItem {
   checked: boolean;
 }
 
-export interface HistoryEntry {
-  title: string;
-  content: string;
-}
-
 interface UseNoteEditorOptions {
   initialTitle?: string;
   initialContent?: string;
@@ -30,10 +25,6 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
   const [showCompleted, setShowCompleted] = useState(true);
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
 
-  // Undo/Redo
-  const [history, setHistory] = useState<HistoryEntry[]>([{ title: initialTitle, content: initialContent }]);
-  const [historyIndex, setHistoryIndex] = useState(0);
-  const historyTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const moreRef = useRef<HTMLDivElement>(null);
   const colorRef = useRef<HTMLDivElement>(null);
@@ -49,10 +40,8 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
     content: initialContent,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
-      // Tiptap returns <p></p> for empty content
       const normalized = html === "<p></p>" ? "" : html;
       setContent(normalized);
-      pushHistoryRef.current(title, normalized);
     },
     onSelectionUpdate: ({ editor }) => {
       updateFormatsFromEditor(editor);
@@ -73,42 +62,16 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
     setActiveFormats(formats);
   }, []);
 
-  // Use ref for pushHistory to avoid stale closures in tiptap callbacks
-  const pushHistoryRef = useRef((t: string, c: string) => {});
-  
-  const pushHistory = useCallback((t: string, c: string) => {
-    if (historyTimeout.current) clearTimeout(historyTimeout.current);
-    historyTimeout.current = setTimeout(() => {
-      setHistory(prev => {
-        const newHistory = prev.slice(0, historyIndex + 1);
-        newHistory.push({ title: t, content: c });
-        return newHistory;
-      });
-      setHistoryIndex(prev => prev + 1);
-    }, 500);
-  }, [historyIndex]);
-
-  pushHistoryRef.current = pushHistory;
-
   const undo = useCallback(() => {
-    if (historyIndex > 0) {
-      const i = historyIndex - 1;
-      setHistoryIndex(i);
-      setTitle(history[i].title);
-      setContent(history[i].content);
-      editor?.commands.setContent(history[i].content);
-    }
-  }, [historyIndex, history, editor]);
+    editor?.commands.undo();
+  }, [editor]);
 
   const redo = useCallback(() => {
-    if (historyIndex < history.length - 1) {
-      const i = historyIndex + 1;
-      setHistoryIndex(i);
-      setTitle(history[i].title);
-      setContent(history[i].content);
-      editor?.commands.setContent(history[i].content);
-    }
-  }, [historyIndex, history, editor]);
+    editor?.commands.redo();
+  }, [editor]);
+
+  const canUndo = editor?.can().undo() ?? false;
+  const canRedo = editor?.can().redo() ?? false;
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -122,8 +85,7 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
 
   const handleTitleChange = useCallback((val: string) => {
     setTitle(val);
-    pushHistory(val, content);
-  }, [content, pushHistory]);
+  }, []);
 
   // Not needed for tiptap but keep for compatibility
   const handleContentInput = useCallback(() => {}, []);
@@ -226,8 +188,6 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
     setIsChecklist(false);
     setChecklistItems([]);
     setShowCompleted(true);
-    setHistory([{ title: newTitle, content: newContent }]);
-    setHistoryIndex(0);
   }, [editor]);
 
   const initFromContent = useCallback((noteTitle: string, noteContent: string) => {
@@ -237,8 +197,6 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
     setShowMore(false);
     setShowColors(false);
     setShowFormatting(false);
-    setHistory([{ title: noteTitle, content: noteContent }]);
-    setHistoryIndex(0);
 
     // Detect checklist
     const lines = noteContent.split("\n");
@@ -261,7 +219,7 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
   return {
     // State
     title, content, showMore, showColors, showFormatting, isChecklist,
-    checklistItems, showCompleted, activeFormats, history, historyIndex,
+    checklistItems, showCompleted, activeFormats, canUndo, canRedo,
     // Refs
     moreRef, colorRef,
     // Tiptap editor instance

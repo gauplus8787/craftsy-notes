@@ -143,8 +143,8 @@ const NoteEditDialog = ({
             showMore={editor.showMore}
             isChecklist={editor.isChecklist}
             currentColor={note.color}
-            historyIndex={editor.historyIndex}
-            historyLength={editor.history.length}
+            canUndo={editor.canUndo}
+            canRedo={editor.canRedo}
             colorRef={editor.colorRef as React.RefObject<HTMLDivElement>}
             moreRef={editor.moreRef as React.RefObject<HTMLDivElement>}
             onToggleFormatting={() => { editor.setShowFormatting(!editor.showFormatting); editor.setShowColors(false); editor.setShowMore(false); }}
