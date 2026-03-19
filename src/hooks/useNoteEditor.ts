@@ -1,7 +1,16 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import { useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  setShowMore, setShowColors, setShowFormatting,
+  setIsChecklist, setChecklistItems, toggleChecklistItem,
+  updateChecklistItem as updateChecklistItemAction,
+  removeChecklistItem as removeChecklistItemAction,
+  addChecklistItem, insertChecklistItem, setShowCompleted,
+  resetEditorState,
+} from "@/store/editorSlice";
 
 export interface ChecklistItem {
   text: string;
@@ -15,19 +24,23 @@ interface UseNoteEditorOptions {
 }
 
 export function useNoteEditor({ initialTitle = "", initialContent = "", containerRef }: UseNoteEditorOptions) {
-  const [title, setTitle] = useState(initialTitle);
-  const [content, setContent] = useState(initialContent);
-  const [showMore, setShowMore] = useState(false);
-  const [showColors, setShowColors] = useState(false);
-  const [showFormatting, setShowFormatting] = useState(false);
-  const [isChecklist, setIsChecklist] = useState(false);
-  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
-  const [showCompleted, setShowCompleted] = useState(true);
-  const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
+  const dispatch = useAppDispatch();
+  const {
+    showMore, showColors, showFormatting,
+    isChecklist, checklistItems, showCompleted,
+  } = useAppSelector((state) => state.editor);
 
+  // Local state for title/content (per-instance, not global)
+  const titleRef = useRef(initialTitle);
+  const contentRef = useRef(initialContent);
+  const [title, setTitle] = [titleRef.current, (val: string) => { titleRef.current = val; }];
 
   const moreRef = useRef<HTMLDivElement>(null);
   const colorRef = useRef<HTMLDivElement>(null);
+  const activeFormatsRef = useRef<Set<string>>(new Set());
+
+  // Force re-render helper
+  const [, forceUpdate] = useForceUpdate();
 
   // Tiptap editor
   const editor = useEditor({
@@ -40,8 +53,7 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
     content: initialContent,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
-      const normalized = html === "<p></p>" ? "" : html;
-      setContent(normalized);
+      contentRef.current = html === "<p></p>" ? "" : html;
     },
     onSelectionUpdate: ({ editor }) => {
       updateFormatsFromEditor(editor);
@@ -59,8 +71,9 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
     if (ed.isActive("strike")) formats.add("strikeThrough");
     if (ed.isActive("heading", { level: 1 })) formats.add("h1");
     if (ed.isActive("heading", { level: 2 })) formats.add("h2");
-    setActiveFormats(formats);
-  }, []);
+    activeFormatsRef.current = formats;
+    forceUpdate();
+  }, [forceUpdate]);
 
   const undo = useCallback(() => {
     editor?.commands.undo();
@@ -76,70 +89,64 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setShowMore(false);
-      if (colorRef.current && !colorRef.current.contains(e.target as Node)) setShowColors(false);
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) dispatch(setShowMore(false));
+      if (colorRef.current && !colorRef.current.contains(e.target as Node)) dispatch(setShowColors(false));
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
+  }, [dispatch]);
 
   const handleTitleChange = useCallback((val: string) => {
-    setTitle(val);
-  }, []);
+    titleRef.current = val;
+    forceUpdate();
+  }, [forceUpdate]);
 
-  // Not needed for tiptap but keep for compatibility
   const handleContentInput = useCallback(() => {}, []);
 
   const toggleChecklist = useCallback(() => {
     if (!isChecklist) {
-      // Strip HTML and split into lines
-      const text = editor?.getText() || content.replace(/<[^>]*>/g, '');
+      const text = editor?.getText() || contentRef.current.replace(/<[^>]*>/g, '');
       const lines = text.split("\n").filter(l => l.trim());
-      setChecklistItems(lines.length > 0 ? lines.map(l => ({ text: l, checked: false })) : [{ text: "", checked: false }]);
-      setIsChecklist(true);
+      dispatch(setChecklistItems(lines.length > 0 ? lines.map(l => ({ text: l, checked: false })) : [{ text: "", checked: false }]));
+      dispatch(setIsChecklist(true));
     } else {
-      setContent(checklistItems.filter(i => i.text.trim()).map(i => i.text).join("\n"));
+      contentRef.current = checklistItems.filter(i => i.text.trim()).map(i => i.text).join("\n");
       editor?.commands.setContent(checklistItems.filter(i => i.text.trim()).map(i => `<p>${i.text}</p>`).join(""));
-      setIsChecklist(false);
+      dispatch(setIsChecklist(false));
     }
-  }, [isChecklist, content, checklistItems, editor]);
+  }, [isChecklist, checklistItems, editor, dispatch]);
 
-  const updateChecklistItem = useCallback((index: number, text: string) => {
-    setChecklistItems(prev => prev.map((item, i) => i === index ? { ...item, text } : item));
-  }, []);
+  const handleUpdateChecklistItem = useCallback((index: number, text: string) => {
+    dispatch(updateChecklistItemAction({ index, text }));
+  }, [dispatch]);
 
-  const toggleChecklistItem = useCallback((index: number) => {
-    setChecklistItems(prev => prev.map((item, i) => i === index ? { ...item, checked: !item.checked } : item));
-  }, []);
+  const handleToggleChecklistItem = useCallback((index: number) => {
+    dispatch(toggleChecklistItem(index));
+  }, [dispatch]);
 
   const handleChecklistKeyDown = useCallback((index: number, e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      setChecklistItems(prev => {
-        const newItems = [...prev];
-        newItems.splice(index + 1, 0, { text: "", checked: false });
-        return newItems;
-      });
+      dispatch(insertChecklistItem({ index }));
       setTimeout(() => {
         containerRef.current?.querySelectorAll<HTMLInputElement>(".checklist-input")?.[index + 1]?.focus();
       }, 0);
     }
     if (e.key === "Backspace" && checklistItems[index]?.text === "" && checklistItems.length > 1) {
       e.preventDefault();
-      setChecklistItems(prev => prev.filter((_, i) => i !== index));
+      dispatch(removeChecklistItemAction(index));
       setTimeout(() => {
         containerRef.current?.querySelectorAll<HTMLInputElement>(".checklist-input")?.[Math.max(0, index - 1)]?.focus();
       }, 0);
     }
-  }, [checklistItems, containerRef]);
+  }, [checklistItems, containerRef, dispatch]);
 
-  const removeChecklistItem = useCallback((index: number) => {
-    if (checklistItems.length > 1) setChecklistItems(prev => prev.filter((_, i) => i !== index));
-  }, [checklistItems.length]);
+  const handleRemoveChecklistItem = useCallback((index: number) => {
+    dispatch(removeChecklistItemAction(index));
+  }, [dispatch]);
 
   const applyFormat = useCallback((command: string) => {
     if (!editor) return;
-    editor.chain().focus();
     switch (command) {
       case "bold": editor.chain().focus().toggleBold().run(); break;
       case "italic": editor.chain().focus().toggleItalic().run(); break;
@@ -174,63 +181,75 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
         .map(item => `${item.checked ? "☑" : "☐"} ${item.text}`)
         .join("\n");
     }
-    const html = editor?.getHTML() || content;
+    const html = editor?.getHTML() || contentRef.current;
     return html === "<p></p>" ? "" : html;
-  }, [isChecklist, checklistItems, content, editor]);
+  }, [isChecklist, checklistItems, editor]);
 
   const resetEditor = useCallback((newTitle = "", newContent = "") => {
-    setTitle(newTitle);
-    setContent(newContent);
+    titleRef.current = newTitle;
+    contentRef.current = newContent;
     editor?.commands.setContent(newContent);
-    setShowMore(false);
-    setShowColors(false);
-    setShowFormatting(false);
-    setIsChecklist(false);
-    setChecklistItems([]);
-    setShowCompleted(true);
-  }, [editor]);
+    dispatch(resetEditorState());
+    forceUpdate();
+  }, [editor, dispatch, forceUpdate]);
 
   const initFromContent = useCallback((noteTitle: string, noteContent: string) => {
-    setTitle(noteTitle);
-    setContent(noteContent);
+    titleRef.current = noteTitle;
+    contentRef.current = noteContent;
     editor?.commands.setContent(noteContent);
-    setShowMore(false);
-    setShowColors(false);
-    setShowFormatting(false);
+    dispatch(setShowMore(false));
+    dispatch(setShowColors(false));
+    dispatch(setShowFormatting(false));
 
     // Detect checklist
     const lines = noteContent.split("\n");
     const isChecklistContent = lines.some(l => l.startsWith("☐ ") || l.startsWith("☑ "));
     if (isChecklistContent) {
-      setIsChecklist(true);
-      setChecklistItems(
+      dispatch(setIsChecklist(true));
+      dispatch(setChecklistItems(
         lines.filter(l => l.trim()).map(l => {
           if (l.startsWith("☑ ")) return { text: l.slice(2), checked: true };
           if (l.startsWith("☐ ")) return { text: l.slice(2), checked: false };
           return { text: l, checked: false };
         })
-      );
+      ));
     } else {
-      setIsChecklist(false);
-      setChecklistItems([]);
+      dispatch(setIsChecklist(false));
+      dispatch(setChecklistItems([]));
     }
-  }, [editor]);
+    forceUpdate();
+  }, [editor, dispatch, forceUpdate]);
 
   return {
     // State
-    title, content, showMore, showColors, showFormatting, isChecklist,
-    checklistItems, showCompleted, activeFormats, canUndo, canRedo,
+    title: titleRef.current, content: contentRef.current,
+    showMore, showColors, showFormatting, isChecklist,
+    checklistItems, showCompleted, activeFormats: activeFormatsRef.current,
+    canUndo, canRedo,
     // Refs
     moreRef, colorRef,
     // Tiptap editor instance
     editor,
-    // Setters
-    setTitle, setContent, setShowMore, setShowColors, setShowFormatting,
-    setChecklistItems, setShowCompleted,
+    // Setters (dispatch wrappers)
+    setTitle: handleTitleChange,
+    setContent: (val: string) => { contentRef.current = val; },
+    setShowMore: (val: boolean) => dispatch(setShowMore(val)),
+    setShowColors: (val: boolean) => dispatch(setShowColors(val)),
+    setShowFormatting: (val: boolean) => dispatch(setShowFormatting(val)),
+    setChecklistItems: (items: ChecklistItem[]) => dispatch(setChecklistItems(items)),
+    setShowCompleted: (val: boolean) => dispatch(setShowCompleted(val)),
     // Actions
     handleTitleChange, handleContentInput, toggleChecklist,
-    updateChecklistItem, toggleChecklistItem, handleChecklistKeyDown,
-    removeChecklistItem, applyFormat, applyHeading,
+    updateChecklistItem: handleUpdateChecklistItem,
+    toggleChecklistItem: handleToggleChecklistItem,
+    handleChecklistKeyDown,
+    removeChecklistItem: handleRemoveChecklistItem,
+    applyFormat, applyHeading,
     undo, redo, getContent, resetEditor, initFromContent,
   };
+}
+
+function useForceUpdate() {
+  const [, setState] = (await import("react")).useState(0);
+  return [undefined, useCallback(() => setState(c => c + 1), [])] as const;
 }
