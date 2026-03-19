@@ -5,12 +5,11 @@ import { useNoteEditor } from "@/hooks/useNoteEditor";
 import NoteEditorContent from "./NoteEditorContent";
 import NoteFormattingToolbar from "./NoteFormattingToolbar";
 import NoteToolbar from "./NoteToolbar";
+import { useAppDispatch } from "@/store/hooks";
+import { addNote } from "@/store/notesSlice";
 
-interface NoteInputProps {
-  onAddNote: (title: string, content: string, options?: { color?: string; pinned?: boolean; archived?: boolean }) => void;
-}
-
-const NoteInput = ({ onAddNote }: NoteInputProps) => {
+const NoteInput = () => {
+  const dispatch = useAppDispatch();
   const [expanded, setExpanded] = useState(false);
   const [color, setColor] = useState("default");
   const [pinned, setPinned] = useState(false);
@@ -32,7 +31,7 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
   const handleClose = () => {
     const finalContent = editor.getContent();
     if (editor.title.trim() || finalContent.trim()) {
-      onAddNote(editor.title, finalContent, { color, pinned, archived: false });
+      dispatch(addNote({ title: editor.title, content: finalContent, color, pinned, archived: false }));
     }
     resetState();
   };
@@ -40,7 +39,7 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
   const handleArchive = () => {
     const finalContent = editor.getContent();
     if (editor.title.trim() || finalContent.trim()) {
-      onAddNote(editor.title, finalContent, { color, pinned: false, archived: true });
+      dispatch(addNote({ title: editor.title, content: finalContent, color, pinned: false, archived: true }));
     }
     resetState();
   };
@@ -132,13 +131,13 @@ const NoteInput = ({ onAddNote }: NoteInputProps) => {
           showMore={editor.showMore}
           isChecklist={editor.isChecklist}
           currentColor={color}
-            canUndo={editor.canUndo}
-            canRedo={editor.canRedo}
+          canUndo={editor.canUndo}
+          canRedo={editor.canRedo}
           colorRef={editor.colorRef as React.RefObject<HTMLDivElement>}
           moreRef={editor.moreRef as React.RefObject<HTMLDivElement>}
-          onToggleFormatting={() => { editor.setShowFormatting(!editor.showFormatting); editor.setShowColors(false); editor.setShowMore(false); }}
-          onToggleColors={() => { editor.setShowColors(!editor.showColors); editor.setShowMore(false); }}
-          onToggleMore={() => { editor.setShowMore(!editor.showMore); editor.setShowColors(false); }}
+          onToggleFormatting={() => { editor.setShowFormatting(!editor.showFormatting); }}
+          onToggleColors={() => { editor.setShowColors(!editor.showColors); }}
+          onToggleMore={() => { editor.setShowMore(!editor.showMore); }}
           onColorSelect={(c) => { setColor(c); editor.setShowColors(false); }}
           onArchive={handleArchive}
           onToggleChecklist={() => { editor.toggleChecklist(); editor.setShowMore(false); }}

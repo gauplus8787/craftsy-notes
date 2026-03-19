@@ -1,8 +1,10 @@
-import { useNotesContext } from "@/contexts/NotesContext";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { selectDeletedNotes, permanentDelete, restoreNote } from "@/store/notesSlice";
 import { Trash2, RotateCcw } from "lucide-react";
 
 const TrashPage = () => {
-  const { deletedNotes, permanentDelete, restoreNote } = useNotesContext();
+  const dispatch = useAppDispatch();
+  const deletedNotes = useAppSelector(selectDeletedNotes);
 
   if (deletedNotes.length === 0) {
     return (
@@ -34,14 +36,14 @@ const TrashPage = () => {
             </div>
             <div className="flex items-center gap-1 px-1.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
-                onClick={() => restoreNote(note.id)}
+                onClick={() => dispatch(restoreNote(note.id))}
                 className="p-2 rounded-full hover:bg-secondary/50 transition-colors"
                 title="Khôi phục"
               >
                 <RotateCcw className="w-4 h-4 text-keep-toolbar" />
               </button>
               <button
-                onClick={() => permanentDelete(note.id)}
+                onClick={() => dispatch(permanentDelete(note.id))}
                 className="p-2 rounded-full hover:bg-secondary/50 transition-colors"
                 title="Xoá vĩnh viễn"
               >

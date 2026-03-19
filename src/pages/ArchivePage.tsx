@@ -1,9 +1,11 @@
 import NoteCard from "@/components/keep/NoteCard";
-import { useNotesContext } from "@/contexts/NotesContext";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { selectArchivedNotes, pinNote, deleteNote, archiveNote, changeColor } from "@/store/notesSlice";
 import { Archive } from "lucide-react";
 
 const ArchivePage = () => {
-  const { archivedNotes, pinNote, deleteNote, archiveNote, changeColor } = useNotesContext();
+  const dispatch = useAppDispatch();
+  const archivedNotes = useAppSelector(selectArchivedNotes);
 
   if (archivedNotes.length === 0) {
     return (
@@ -20,10 +22,10 @@ const ArchivePage = () => {
         <NoteCard
           key={note.id}
           note={note}
-          onPin={pinNote}
-          onDelete={deleteNote}
-          onColorChange={changeColor}
-          onArchive={archiveNote}
+          onPin={(id) => dispatch(pinNote(id))}
+          onDelete={(id) => dispatch(deleteNote(id))}
+          onColorChange={(id, c) => dispatch(changeColor({ id, color: c }))}
+          onArchive={(id) => dispatch(archiveNote(id))}
         />
       ))}
     </div>
