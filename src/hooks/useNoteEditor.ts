@@ -250,6 +250,6 @@ export function useNoteEditor({ initialTitle = "", initialContent = "", containe
 }
 
 function useForceUpdate() {
-  const [, setState] = (await import("react")).useState(0);
-  return [undefined, useCallback(() => setState(c => c + 1), [])] as const;
+  const [, setState] = useState(0);
+  return [undefined, useCallback(() => setState((c: number) => c + 1), [])] as const;
 }
