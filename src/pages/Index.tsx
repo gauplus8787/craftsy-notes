@@ -15,17 +15,19 @@ import NoteInput from "@/components/keep/NoteInput";
 import { type Note } from "@/components/keep/NoteCard";
 import SortableNoteCard from "@/components/keep/SortableNoteCard";
 import NoteEditDialog from "@/components/keep/NoteEditDialog";
-import { useNotesContext } from "@/contexts/NotesContext";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { selectActiveNotes, pinNote, deleteNote, archiveNote, changeColor, updateNote, reorderNotes } from "@/store/notesSlice";
+import { openEditor, closeEditor } from "@/store/editorSlice";
 
 const Index = () => {
-  const { activeNotes, addNote, pinNote, deleteNote, archiveNote, changeColor, updateNote, reorderNotes } = useNotesContext();
-  const [editingNote, setEditingNote] = useState<Note | null>(null);
-  const [sourceRect, setSourceRect] = useState<DOMRect | null>(null);
+  const dispatch = useAppDispatch();
+  const activeNotes = useAppSelector(selectActiveNotes);
+  const { editingNoteId, sourceRect } = useAppSelector((state) => state.editor);
 
   const pinnedNotes = activeNotes.filter((n) => n.pinned);
   const otherNotes = activeNotes.filter((n) => !n.pinned);
 
-  const currentEditNote = editingNote ? activeNotes.find(n => n.id === editingNote.id) || editingNote : null;
+  const editingNote = editingNoteId ? activeNotes.find(n => n.id === editingNoteId) || null : null;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -36,31 +38,37 @@ const Index = () => {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      reorderNotes(active.id as string, over.id as string);
+      dispatch(reorderNotes({ fromId: active.id as string, toId: over.id as string }));
     }
   };
 
   const handleNoteClick = (note: Note, rect: DOMRect) => {
-    setSourceRect(rect);
-    setEditingNote(note);
+    dispatch(openEditor({
+      noteId: note.id,
+      sourceRect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+    }));
   };
 
   const renderNoteCard = (note: Note) => (
     <SortableNoteCard
       key={note.id}
       note={note}
-      onPin={pinNote}
-      onDelete={deleteNote}
-      onColorChange={changeColor}
-      onArchive={archiveNote}
+      onPin={(id) => dispatch(pinNote(id))}
+      onDelete={(id) => dispatch(deleteNote(id))}
+      onColorChange={(id, c) => dispatch(changeColor({ id, color: c }))}
+      onArchive={(id) => dispatch(archiveNote(id))}
       onClick={(rect) => handleNoteClick(note, rect)}
-      hidden={editingNote?.id === note.id}
+      hidden={editingNoteId === note.id}
     />
   );
 
+  const sourceRectAsDomRect = sourceRect
+    ? { ...sourceRect, right: sourceRect.left + sourceRect.width, bottom: sourceRect.top + sourceRect.height, x: sourceRect.left, y: sourceRect.top, toJSON: () => {} } as DOMRect
+    : null;
+
   return (
     <>
-      <NoteInput onAddNote={addNote} />
+      <NoteInput />
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         {pinnedNotes.length > 0 && (
@@ -88,17 +96,17 @@ const Index = () => {
         </SortableContext>
       </DndContext>
 
-      {currentEditNote && (
+      {editingNote && (
         <NoteEditDialog
-          note={currentEditNote}
-          open={!!currentEditNote}
-          onClose={() => { setEditingNote(null); setSourceRect(null); }}
-          onUpdate={updateNote}
-          onDelete={(id) => { deleteNote(id); setEditingNote(null); }}
-          onArchive={(id) => { archiveNote(id); setEditingNote(null); }}
-          onPin={pinNote}
-          onColorChange={changeColor}
-          sourceRect={sourceRect}
+          note={editingNote}
+          open={!!editingNote}
+          onClose={() => dispatch(closeEditor())}
+          onUpdate={(id, updates) => dispatch(updateNote({ id, updates }))}
+          onDelete={(id) => { dispatch(deleteNote(id)); dispatch(closeEditor()); }}
+          onArchive={(id) => { dispatch(archiveNote(id)); dispatch(closeEditor()); }}
+          onPin={(id) => dispatch(pinNote(id))}
+          onColorChange={(id, c) => dispatch(changeColor({ id, color: c }))}
+          sourceRect={sourceRectAsDomRect}
         />
       )}
     </>
